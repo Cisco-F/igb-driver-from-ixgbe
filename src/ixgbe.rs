@@ -819,7 +819,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         let mut mii_reg = self.read_mdic(0);
         mii_reg |= 1 << 9;
         self.write_mdic(0, mii_reg);
-        //let status = self.get_reg32(IGB_STATUS);
+        let status = self.get_reg32(IGB_STATUS);
         info!("reset status {:b}", status);
         loop{
             let status = self.get_reg32(IGB_STATUS);
