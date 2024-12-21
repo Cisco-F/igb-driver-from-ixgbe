@@ -13,7 +13,7 @@ use core::time::Duration;
 use core::{mem, ptr};
 use smoltcp::wire::{EthernetFrame, PrettyPrinter};
 
-const DRIVER_NAME: &str = "gb";
+const DRIVER_NAME: &str = "igb_cisco";
 
 const MAX_QUEUES: u16 = 64;
 
@@ -534,14 +534,12 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         info!("resetting device igb device");
         // section 4.6.3.1 - disable all interrupts
         self.disable_interrupts();
-        
 
         // section 4.6.3.2
         self.set_reg32(IXGBE_CTRL, IXGBE_CTRL_RST);
         self.wait_clear_reg32(IXGBE_CTRL, IXGBE_CTRL_RST);
         // TODO: sleep 10 millis.
         let _ = H::wait_until(Duration::from_millis(1000));
-        
 
         // section 4.6.3.1 - disable interrupts again after reset
         self.disable_interrupts();
@@ -563,7 +561,6 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
 
         // section 4.6.7 - init rx
         self.init_rx(pool)?;
-        
 
         // section 4.6.8 - init tx
         self.init_tx()?;
@@ -607,41 +604,15 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         self.wait_clear_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
         self.set_reg32(IXGBE_RXDCTL(0), 0);
 
-        // section 4.6.11.3.4 - allocate all queues and traffic to PB0
-        /*self.set_reg32(IXGBE_RXPBSIZE(0), IXGBE_RXPBSIZE_128KB);
-        for i in 1..8 {
-            self.set_reg32(IXGBE_RXPBSIZE(i), 0);
-        }
-        */
-        //defaut RX buffer size 64K
-
-        // enable CRC offloading
-        /* 
-        self.set_flags32(IXGBE_HLREG0, IXGBE_HLREG0_RXCRCSTRP);
-        self.set_flags32(IXGBE_RDRXCTL, IXGBE_RDRXCTL_CRCSTRIP);
-
-        // accept broadcast packets
-        self.set_flags32(IXGBE_FCTRL, IXGBE_FCTRL_BAM);
-        */
         self.set_flags32(IXGBE_RXCTRL, IGB_RCTL_BAM);
         // accept broadcast packets
         info!("accept brodcast packet");
         self.set_flags32(IXGBE_RXCTRL, IGB_RCTL_LPE);
         self.set_flags32(IXGBE_CTRL_EXT, 0x00010000);
-        //enable CRC
-
 
         // configure queues, same for all queues
         for i in 0..self.num_rx_queues {
             info!("initializing rx queue {}", i);
-            // enable advanced rx descriptors
-            /* 
-            self.set_reg32(
-                IXGBE_SRRCTL(u32::from(i)),
-                (self.get_reg32(IXGBE_SRRCTL(u32::from(i))) & !IXGBE_SRRCTL_DESCTYPE_MASK)
-                    | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF,
-            );
-            */
             // let nic drop packets if no rx descriptor is available instead of buffering them
             self.set_flags32(IXGBE_SRRCTL(u32::from(i)), IXGBE_SRRCTL_DROP_EN);
 
@@ -694,10 +665,9 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         }
 
         // start rx
-        info!("enable rx");
         self.set_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
         self.wait_set_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
-        info!("finnal rx enabel");
+        info!("rx init complete");
 
         Ok(())
     }
@@ -706,16 +676,6 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     /// Initializes the tx queues of this device.
     #[allow(clippy::needless_range_loop)]
     fn init_tx(&mut self) -> IxgbeResult {
-        /* 
-        // crc offload and small packet padding
-        self.set_flags32(IXGBE_HLREG0, IXGBE_HLREG0_TXCRCEN | IXGBE_HLREG0_TXPADEN);
-
-        // section 4.6.11.3.4 - set default buffer size allocations
-        self.set_reg32(IXGBE_TXPBSIZE(0), IXGBE_TXPBSIZE_40KB);
-        for i in 1..8 {
-            self.set_reg32(IXGBE_TXPBSIZE(i), 0xff);
-        }
-        */
 
         // required when not using DCB/VTd
         self.set_reg32(IXGBE_DTXMXSZRQ, 0xffff);
@@ -775,6 +735,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
 
         // final step: enable DMA
         self.set_reg32(IXGBE_DMATXCTL, IXGBE_DMATXCTL_TE);
+        info!("tx init complete");
 
         Ok(())
     }
@@ -846,8 +807,6 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         txd_ctl |= 1 << 8;
         txd_ctl |= 1 << 16;
         self.set_reg32(IXGBE_TXDCTL(u32::from(queue_id)), txd_ctl);
-        info!("add some feature");
-
         self.set_flags32(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
         self.wait_set_reg32(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
 
@@ -857,31 +816,15 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     // see section 4.6.4
     /// Initializes the link of this device.
     fn init_link(&mut self) {
-        /* 
-        // link auto-configuration register should already be set correctly, we're resetting it anyway
-        self.set_reg32(
-            IXGBE_AUTOC,
-            (self.get_reg32(IXGBE_AUTOC) & !IXGBE_AUTOC_LMS_MASK) | IXGBE_AUTOC_LMS_10G_SERIAL,
-        );
-        self.set_reg32(
-            IXGBE_AUTOC,
-            (self.get_reg32(IXGBE_AUTOC) & !IXGBE_AUTOC_10G_PMA_PMD_MASK) | IXGBE_AUTOC_10G_XAUI,
-        );
-        // negotiate link
-        self.set_flags32(IXGBE_AUTOC, IXGBE_AUTOC_AN_RESTART);
-        // datasheet wants us to wait for the link here, but we can continue and wait afterwards
-        */
         let mut mii_reg = self.read_mdic(0);
-        mii_reg = self.read_mdic(0);
-        mii_reg |= 1<<9;
-        info!("rs_atu write_mii{:b}", mii_reg);
+        mii_reg |= 1 << 9;
         self.write_mdic(0, mii_reg);
         //let status = self.get_reg32(IGB_STATUS);
-        //info!("reset end status {:b}", status);
+        info!("reset status {:b}", status);
         loop{
             let status = self.get_reg32(IGB_STATUS);
             //info!("status {:b}", status);
-            if (status &(1 << 1)) == (1<<1){
+            if status & 0b10 == 0x10 {
                 break;
             }
         }
