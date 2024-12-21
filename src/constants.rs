@@ -135,13 +135,6 @@ pub const IXGBE_I2CCTL_X550: u32 = 0x15F5C;
 pub const IXGBE_I2CCTL_X550EM_x: u32 = IXGBE_I2CCTL_X550;
 pub const IXGBE_I2CCTL_X550EM_a: u32 = IXGBE_I2CCTL_X550;
 
-// for igb
-pub const IGB_MDIC: u32 = 0x0020;
-pub const IGB_MDIC_WRITE: u32 = 1 << 26;
-pub const IGB_MDIC_READ: u32 = 1 << 27;
-pub const IGB_MDIC_READY: u32 = 1 << 28;
-pub const IGB_STATUS: u32 = 0x00008;
-
 pub fn IXGBE_I2CCTL_BY_MAC(hw: u32) -> u32 {
     IXGBE_BY_MAC(hw, IXGBE_I2CCTL)
 }
@@ -301,10 +294,10 @@ pub const IXGBE_EMC_DIODE2_THERM_LIMIT: u32 = 0x1A;
 pub const IXGBE_MAX_SENSORS: u32 = 3;
 
 /* Interrupt Registers */
-pub const IXGBE_EICR: u32 = 0x00800;
+pub const IXGBE_EICR: u32 = 0x01580;
 pub const IXGBE_EICS: u32 = 0x00808;
-pub const IXGBE_EIMS: u32 = 0x00880;
-pub const IXGBE_EIMC: u32 = 0x00888;
+pub const IXGBE_EIMS: u32 = 0x01524;
+pub const IXGBE_EIMC: u32 = 0x01528;
 pub const IXGBE_EIAC: u32 = 0x00810;
 pub const IXGBE_EIAM: u32 = 0x00890;
 
@@ -392,42 +385,42 @@ pub const IXGBE_TFCS: u32 = 0x0CE00;
 /* Receive DMA Registers */
 pub fn IXGBE_RDBAL(i: u32) -> u32 {
     if i < 64 {
-        0x01000 + i * 0x40
+        0x0C000 + i * 0x40
     } else {
         0x0D000 + ((i - 64) * 0x40)
     }
 }
 pub fn IXGBE_RDBAH(i: u32) -> u32 {
     if i < 64 {
-        0x01004 + i * 0x40
+        0x0C004 + i * 0x40
     } else {
         0x0D004 + ((i - 64) * 0x40)
     }
 }
 pub fn IXGBE_RDLEN(i: u32) -> u32 {
     if i < 64 {
-        0x01008 + i * 0x40
+        0x0C008 + i * 0x40
     } else {
         0x0D008 + ((i - 64) * 0x40)
     }
 }
 pub fn IXGBE_RDH(i: u32) -> u32 {
     if i < 64 {
-        0x01010 + i * 0x40
+        0x0C010 + i * 0x40
     } else {
         0x0D010 + ((i - 64) * 0x40)
     }
 }
 pub fn IXGBE_RDT(i: u32) -> u32 {
     if i < 64 {
-        0x01018 + i * 0x40
+        0x0C018 + i * 0x40
     } else {
         0x0D018 + ((i - 64) * 0x40)
     }
 }
 pub fn IXGBE_RXDCTL(i: u32) -> u32 {
     if i < 64 {
-        0x01028 + i * 0x40
+        0x0C028 + i * 0x40
     } else {
         0x0D028 + ((i - 64) * 0x40)
     }
@@ -452,7 +445,7 @@ pub const IXGBE_STARCTRL: u32 = 0x03024;
  */
 pub fn IXGBE_SRRCTL(i: u32) -> u32 {
     if i <= 15 {
-        0x02100 + i * 4
+        0x0C00C + i * 0x40
     } else if i < 64 {
         0x01014 + i * 0x40
     } else {
@@ -467,7 +460,7 @@ pub fn IXGBE_SRRCTL(i: u32) -> u32 {
  */
 pub fn IXGBE_DCA_RXCTRL(i: u32) -> u32 {
     if i <= 15 {
-        0x02200 + i * 4
+        0x0C028 + i * 0x40
     } else if i < 64 {
         0x0100C + i * 0x40
     } else {
@@ -481,7 +474,7 @@ pub fn IXGBE_RXPBSIZE(i: u32) -> u32 {
     0x03C00 + i * 4
 }
 
-pub const IXGBE_RXCTRL: u32 = 0x03000;
+pub const IXGBE_RXCTRL: u32 = 0x01000;
 pub const IXGBE_DROPEN: u32 = 0x03D04;
 pub const IXGBE_RXPBSIZE_SHIFT: u32 = 10;
 pub const IXGBE_RXPBSIZE_MASK: u32 = 0x000FFC00;
@@ -3053,7 +3046,7 @@ pub const IXGBE_TDWBAL_HEAD_WB_ENABLE: u32 = 0x1; /* Tx head write-back enable *
 pub const IXGBE_TDWBAL_SEQNUM_WB_ENABLE: u32 = 0x2; /* Tx seq# write-back enable */
 
 /* Receive Config masks */
-pub const IXGBE_RXCTRL_RXEN: u32 = 0x00000001; /* Enable Receiver */
+pub const IXGBE_RXCTRL_RXEN: u32 = 0x000000010; /* Enable Receiver */
 pub const IXGBE_RXCTRL_DMBYPS: u32 = 0x00000002; /* Desc Monitor Bypass */
 pub const IXGBE_RXDCTL_ENABLE: u32 = 0x02000000; /* Ena specific Rx Queue */
 pub const IXGBE_RXDCTL_SWFLSH: u32 = 0x04000000; /* Rx Desc wr-bk flushing */
@@ -3268,7 +3261,7 @@ pub const IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT: u32 = 2; /* 64byte resolution (>> 6)
                                                      */
 pub const IXGBE_SRRCTL_RDMTS_SHIFT: u32 = 22;
 pub const IXGBE_SRRCTL_RDMTS_MASK: u32 = 0x01C00000;
-pub const IXGBE_SRRCTL_DROP_EN: u32 = 0x10000000;
+pub const IXGBE_SRRCTL_DROP_EN: u32 = 1 << 31;
 pub const IXGBE_SRRCTL_BSIZEPKT_MASK: u32 = 0x0000007F;
 pub const IXGBE_SRRCTL_BSIZEHDR_MASK: u32 = 0x00003F00;
 pub const IXGBE_SRRCTL_DESCTYPE_LEGACY: u32 = 0x00000000;
