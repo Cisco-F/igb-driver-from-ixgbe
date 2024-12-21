@@ -135,6 +135,13 @@ pub const IXGBE_I2CCTL_X550: u32 = 0x15F5C;
 pub const IXGBE_I2CCTL_X550EM_x: u32 = IXGBE_I2CCTL_X550;
 pub const IXGBE_I2CCTL_X550EM_a: u32 = IXGBE_I2CCTL_X550;
 
+// for igb
+pub const IGB_MDIC: u32 = 0x0020;
+pub const IGB_MDIC_WRITE: u32 = 1 << 26;
+pub const IGB_MDIC_READ: u32 = 1 << 27;
+pub const IGB_MDIC_READY: u32 = 1 << 28;
+pub const IGB_STATUS: u32 = 0x00008;
+
 pub fn IXGBE_I2CCTL_BY_MAC(hw: u32) -> u32 {
     IXGBE_BY_MAC(hw, IXGBE_I2CCTL)
 }

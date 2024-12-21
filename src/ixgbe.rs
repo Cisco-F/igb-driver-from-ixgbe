@@ -13,7 +13,7 @@ use core::time::Duration;
 use core::{mem, ptr};
 use smoltcp::wire::{EthernetFrame, PrettyPrinter};
 
-const DRIVER_NAME: &str = "ixgbe";
+const DRIVER_NAME: &str = "igb_cisco";
 
 const MAX_QUEUES: u16 = 64;
 
@@ -399,7 +399,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         pool: &Arc<MemPool>,
     ) -> IxgbeResult<Self> {
         info!(
-            "Initializing ixgbe device@base: {:#x}, len: {:#x}, num_rx_queues: {}, num_tx_queues: {}",
+            "Initializing igb device@base: {:#x}, len: {:#x}, num_rx_queues: {}, num_tx_queues: {}",
             base, len, num_rx_queues, num_tx_queues
         );
         // initialize RX and TX queue
@@ -531,62 +531,76 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
 impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     /// Resets and initializes the device.
     fn reset_and_init(&mut self, pool: &Arc<MemPool>) -> IxgbeResult {
-        info!("resetting device ixgbe device");
-        // section 4.6.3.1 - disable all interrupts
-        self.disable_interrupts();
+        info!("resetting device: igb device");
 
-        // section 4.6.3.2
-        self.set_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
-        self.wait_clear_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
-        // TODO: sleep 10 millis.
-        let _ = H::wait_until(Duration::from_millis(1000));
+        // set up phy and link
+        let mut pctrl = self.read_mdic(0);
+        pctrl |= 1 << 9;
+        info!("start igb auto negotiation");
+        self.write_mdic(0, pctrl);
 
-        // section 4.6.3.1 - disable interrupts again after reset
-        self.disable_interrupts();
-
-        let mac = self.get_mac_addr();
-        info!(
-            "mac address: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
-            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-        );
-
-        // section 4.6.3 - wait for EEPROM auto read completion
-        self.wait_set_reg32(IXGBE_EEC, IXGBE_EEC_ARD);
-
-        // section 4.6.3 - wait for dma initialization done
-        self.wait_set_reg32(IXGBE_RDRXCTL, IXGBE_RDRXCTL_DMAIDONE);
-
-        // skip last step from 4.6.3 - we don't want interrupts(ixy)
-        // section 4.6.3 Enable interrupts.
-
-        // section 4.6.4 - initialize link (auto negotiation)
-        self.init_link();
-
-        // section 4.6.5 - statistical counters
-        // reset-on-read registers, just read them once
-        self.reset_stats();
-
-        // section 4.6.7 - init rx
-        self.init_rx(pool)?;
-
-        // section 4.6.8 - init tx
-        self.init_tx()?;
-
-        for i in 0..self.num_rx_queues {
-            self.start_rx_queue(i)?;
+        loop {
+            let status = self.get_reg32(IGB_STATUS);
+            debug!("igb status: {status:b}");
+            if status & 0b10 == 0b10 {
+                break;
+            }
         }
+        // // section 4.6.3.1 - disable all interrupts
+        // self.disable_interrupts();
 
-        for i in 0..self.num_tx_queues {
-            self.start_tx_queue(i)?;
-        }
+        // // section 4.6.3.2
+        // self.set_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
+        // self.wait_clear_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
+        // // TODO: sleep 10 millis.
+        // let _ = H::wait_until(Duration::from_millis(1000));
 
-        // enable promisc mode by default to make testing easier
-        self.set_promisc(true);
+        // // section 4.6.3.1 - disable interrupts again after reset
+        // self.disable_interrupts();
 
-        // wait some time for the link to come up
-        self.wait_for_link();
+        // let mac = self.get_mac_addr();
+        // info!(
+        //     "mac address: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+        //     mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
+        // );
 
-        info!("Success to initialize and reset Intel 10G NIC regs.");
+        // // section 4.6.3 - wait for EEPROM auto read completion
+        // self.wait_set_reg32(IXGBE_EEC, IXGBE_EEC_ARD);
+
+        // // section 4.6.3 - wait for dma initialization done
+        // self.wait_set_reg32(IXGBE_RDRXCTL, IXGBE_RDRXCTL_DMAIDONE);
+
+        // // skip last step from 4.6.3 - we don't want interrupts(ixy)
+        // // section 4.6.3 Enable interrupts.
+
+        // // section 4.6.4 - initialize link (auto negotiation)
+        // self.init_link();
+
+        // // section 4.6.5 - statistical counters
+        // // reset-on-read registers, just read them once
+        // self.reset_stats();
+
+        // // section 4.6.7 - init rx
+        // self.init_rx(pool)?;
+
+        // // section 4.6.8 - init tx
+        // self.init_tx()?;
+
+        // for i in 0..self.num_rx_queues {
+        //     self.start_rx_queue(i)?;
+        // }
+
+        // for i in 0..self.num_tx_queues {
+        //     self.start_tx_queue(i)?;
+        // }
+
+        // // enable promisc mode by default to make testing easier
+        // self.set_promisc(true);
+
+        // // wait some time for the link to come up
+        // self.wait_for_link();
+
+        // info!("Success to initialize and reset Intel 10G NIC regs.");
 
         Ok(())
     }
@@ -962,6 +976,33 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         ivar &= !(0xFF << index);
         ivar |= msix_vector << index;
         self.set_reg32(IXGBE_IVAR(u32::from(queue) >> 1), ivar);
+    }
+
+    /// read data from mdic
+    fn read_mdic(&self, offset: u32) -> u16 {
+        let mut mdic = offset << 16 | 1 << 21 | IGB_MDIC_READ;
+        self.set_reg32(IGB_MDIC, mdic);
+
+        loop {
+            mdic = self.get_reg32(IGB_MDIC);
+            if(mdic & IGB_MDIC_READY) == IGB_MDIC_READY {
+                break;
+            }
+        }
+        return mdic as u16;
+    }
+
+    /// wriet data to mdic, ignore errors
+    fn write_mdic(&self, offset: u32, data: u16) {
+        let mut mdic = offset << 16 | 1 << 21 | data as u32 | IGB_MDIC_WRITE;
+        self.set_reg32(IGB_MDIC, mdic);
+
+        loop {
+            mdic = self.get_reg32(IGB_MDIC);
+            if(mdic & IGB_MDIC_READY) == IGB_MDIC_READY {
+                break;
+            }
+        }
     }
 }
 
