@@ -301,11 +301,11 @@ pub const IXGBE_MAX_SENSORS: u32 = 3;
 
 /* Interrupt Registers */
 pub const IXGBE_EICR: u32 = 0x01580;
-pub const IXGBE_EICS: u32 = 0x00808;
+pub const IXGBE_EICS: u32 = 0x01520;
 pub const IXGBE_EIMS: u32 = 0x01524;
 pub const IXGBE_EIMC: u32 = 0x01528;
-pub const IXGBE_EIAC: u32 = 0x00810;
-pub const IXGBE_EIAM: u32 = 0x00890;
+pub const IXGBE_EIAC: u32 = 0x0152C;
+pub const IXGBE_EIAM: u32 = 0x01530;
 
 pub fn IXGBE_EICS_EX(i: u32) -> u32 {
     0x00A90 + i * 4
@@ -480,7 +480,7 @@ pub fn IXGBE_RXPBSIZE(i: u32) -> u32 {
     0x03C00 + i * 4
 }
 
-pub const IXGBE_RXCTRL: u32 = 0x01000;
+pub const IXGBE_RXCTRL: u32 = 0x0100;
 pub const IXGBE_DROPEN: u32 = 0x03D04;
 pub const IXGBE_RXPBSIZE_SHIFT: u32 = 10;
 pub const IXGBE_RXPBSIZE_MASK: u32 = 0x000FFC00;
@@ -759,7 +759,7 @@ pub fn IXGBE_TXPBTHRESH(i: u32) -> u32 {
     0x04950 + i * 4
 } /* 8 of these 0 - 7 */
 
-pub const IXGBE_DMATXCTL_TE: u32 = 0x2; /* Transmit Enable */
+pub const IXGBE_DMATXCTL_TE: u32 = 1 << 1; /* Transmit Enable */
 pub const IXGBE_DMATXCTL_NS: u32 = 0x2; /* No Snoop LSO hdr buffer */
 pub const IXGBE_DMATXCTL_GDV: u32 = 0x8; /* Global Double VLAN */
 pub const IXGBE_DMATXCTL_MDP_EN: u32 = 0x20; /* Bit 5 */
@@ -3052,7 +3052,7 @@ pub const IXGBE_TDWBAL_HEAD_WB_ENABLE: u32 = 0x1; /* Tx head write-back enable *
 pub const IXGBE_TDWBAL_SEQNUM_WB_ENABLE: u32 = 0x2; /* Tx seq# write-back enable */
 
 /* Receive Config masks */
-pub const IXGBE_RXCTRL_RXEN: u32 = 0x000000010; /* Enable Receiver */
+pub const IXGBE_RXCTRL_RXEN: u32 = 1 << 1; /* Enable Receiver */
 pub const IXGBE_RXCTRL_DMBYPS: u32 = 0x00000002; /* Desc Monitor Bypass */
 pub const IXGBE_RXDCTL_ENABLE: u32 = 1 << 25; /* Ena specific Rx Queue */
 pub const IXGBE_RXDCTL_SWFLSH: u32 = 0x04000000; /* Rx Desc wr-bk flushing */

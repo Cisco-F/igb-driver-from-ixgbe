@@ -815,6 +815,11 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         self.set_reg32(IXGBE_TDT(u32::from(queue_id)), 0);
 
         // enable queue and wait if necessary
+        let mut txdctl = self.get_reg32(IXGBE_TXDCTL(u32::from(queue_id)));
+        txdctl |= 8;
+        txdctl |= 1 << 8;
+        txdctl |= 1 << 16;
+        self.set_reg32(IXGBE_TXDCTL(u32::from(queue_id)), txdctl);
         self.set_flags32(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
         self.wait_set_reg32(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
 
