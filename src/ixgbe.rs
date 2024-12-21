@@ -590,7 +590,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     fn init_rx(&mut self, pool: &Arc<MemPool>) -> IxgbeResult {
         // disable rx while re-configuring it
         // self.clear_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
-        self.wait_clear_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.wait_clear_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
         self.set_reg32(IXGBE_RXDCTL(0), 0);
 
         // section 4.6.11.3.4 - allocate all queues and traffic to PB0
@@ -670,7 +670,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         // probably a broken feature, this flag is initialized with 1 but has to be set to 0
         for i in 0..self.num_rx_queues {
             // self.clear_flags32(IXGBE_DCA_RXCTRL(u32::from(i)), 1 << 12);
-            self.set_flags32(IXGBE_DCA_RXCTRL(u32::fomr(i)), 1 << 25);
+            self.set_flags32(IXGBE_DCA_RXCTRL(u32::from(i)), 1 << 25);
         }
 
         // start rx
