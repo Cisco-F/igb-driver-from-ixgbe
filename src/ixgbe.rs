@@ -565,19 +565,19 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         // init tx
         self.init_tx()?;
 
-        // for i in 0..self.num_rx_queues {
-        //     self.start_rx_queue(i)?;
-        // }
+        for i in 0..self.num_rx_queues {
+            self.start_rx_queue(i)?;
+        }
 
-        // for i in 0..self.num_tx_queues {
-        //     self.start_tx_queue(i)?;
-        // }
+        for i in 0..self.num_tx_queues {
+            self.start_tx_queue(i)?;
+        }
 
-        // // enable promisc mode by default to make testing easier
-        // self.set_promisc(true);
+        // enable promisc mode by default to make testing easier
+        self.set_promisc(true);
 
-        // // wait some time for the link to come up
-        // self.wait_for_link();
+        // wait some time for the link to come up
+        self.wait_for_link();
 
         info!("igb initialization and reset complete!");
 
@@ -675,18 +675,18 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     /// Initializes the tx queues of this device.
     #[allow(clippy::needless_range_loop)]
     fn init_tx(&mut self) -> IxgbeResult {
-        // crc offload and small packet padding
-        self.set_flags32(IXGBE_HLREG0, IXGBE_HLREG0_TXCRCEN | IXGBE_HLREG0_TXPADEN);
+        // // crc offload and small packet padding
+        // self.set_flags32(IXGBE_HLREG0, IXGBE_HLREG0_TXCRCEN | IXGBE_HLREG0_TXPADEN);
 
-        // section 4.6.11.3.4 - set default buffer size allocations
-        self.set_reg32(IXGBE_TXPBSIZE(0), IXGBE_TXPBSIZE_40KB);
-        for i in 1..8 {
-            self.set_reg32(IXGBE_TXPBSIZE(i), 0xff);
-        }
+        // // section 4.6.11.3.4 - set default buffer size allocations
+        // self.set_reg32(IXGBE_TXPBSIZE(0), IXGBE_TXPBSIZE_40KB);
+        // for i in 1..8 {
+        //     self.set_reg32(IXGBE_TXPBSIZE(i), 0xff);
+        // }
 
         // required when not using DCB/VTd
         self.set_reg32(IXGBE_DTXMXSZRQ, 0xffff);
-        self.clear_flags32(IXGBE_RTTDCS, IXGBE_RTTDCS_ARBDIS);
+        // self.clear_flags32(IXGBE_RTTDCS, IXGBE_RTTDCS_ARBDIS);
 
         // configure queues
         for i in 0..self.num_tx_queues {

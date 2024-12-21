@@ -123,6 +123,12 @@ pub fn IXGBE_BY_MAC(_hw: u32, _r: u32) -> u32 {
 }
 
 /* General Registers */
+pub const IGB_MDIC: u32 = 0x00020;
+pub const IGB_MDIC_READ: u32 = 1 << 27;
+pub const IGB_MDIC_WRITE: u32 = 1 << 26;
+pub const IGB_MDIC_READY: u32 = 1 << 28;
+pub const IGB_STATUS: u32 = 0x00008;
+
 pub const IXGBE_CTRL: u32 = 0x00000;
 pub const IXGBE_STATUS: u32 = 0x00008;
 pub const IXGBE_CTRL_EXT: u32 = 0x00018;
@@ -531,7 +537,7 @@ pub fn IXGBE_VFTAVIND(j: u32, i: u32) -> u32 {
     0x0A200 + j * 0x200 + i * 4
 }
 
-pub const IXGBE_FCTRL: u32 = 0x05080;
+pub const IXGBE_FCTRL: u32 = 0x00100;
 pub const IXGBE_VLNCTRL: u32 = 0x05088;
 pub const IXGBE_MCSTCTRL: u32 = 0x05090;
 pub const IXGBE_MRQC: u32 = 0x05818;
@@ -706,34 +712,34 @@ pub const IXGBE_FDIRCMD: u32 = 0x0EE2C;
 
 /* Transmit DMA registers */
 pub fn IXGBE_TDBAL(i: u32) -> u32 {
-    0x06000 + i * 0x40
+    0x0E000 + i * 0x40
 } /* 32 of them (0-31)*/
 pub fn IXGBE_TDBAH(i: u32) -> u32 {
-    0x06004 + i * 0x40
+    0x0E004 + i * 0x40
 }
 
 pub fn IXGBE_TDLEN(i: u32) -> u32 {
-    0x06008 + i * 0x40
+    0x0E008 + i * 0x40
 }
 
 pub fn IXGBE_TDH(i: u32) -> u32 {
-    0x06010 + i * 0x40
+    0x0E010 + i * 0x40
 }
 
 pub fn IXGBE_TDT(i: u32) -> u32 {
-    0x06018 + i * 0x40
+    0x0E018 + i * 0x40
 }
 
 pub fn IXGBE_TXDCTL(i: u32) -> u32 {
-    0x06028 + i * 0x40
+    0x0E028 + i * 0x40
 }
 
 pub fn IXGBE_TDWBAL(i: u32) -> u32 {
-    0x06038 + i * 0x40
+    0x0E038 + i * 0x40
 }
 
 pub fn IXGBE_TDWBAH(i: u32) -> u32 {
-    0x0603C + i * 0x40
+    0x0E03C + i * 0x40
 }
 
 pub const IXGBE_DTXCTL: u32 = 0x07E00;
@@ -744,7 +750,7 @@ pub fn IXGBE_PFVFSPOOF(i: u32) -> u32 {
     0x08200 + i * 4
 } /* 8 of these 0 - 7 */
 pub const IXGBE_PFDTXGSWC: u32 = 0x08220;
-pub const IXGBE_DTXMXSZRQ: u32 = 0x08100;
+pub const IXGBE_DTXMXSZRQ: u32 = 0x03540;
 pub const IXGBE_DTXTCPFLGL: u32 = 0x04A88;
 pub const IXGBE_DTXTCPFLGH: u32 = 0x04A8C;
 pub const IXGBE_LBDRPEN: u32 = 0x0CA00;
@@ -753,7 +759,7 @@ pub fn IXGBE_TXPBTHRESH(i: u32) -> u32 {
     0x04950 + i * 4
 } /* 8 of these 0 - 7 */
 
-pub const IXGBE_DMATXCTL_TE: u32 = 0x1; /* Transmit Enable */
+pub const IXGBE_DMATXCTL_TE: u32 = 0x2; /* Transmit Enable */
 pub const IXGBE_DMATXCTL_NS: u32 = 0x2; /* No Snoop LSO hdr buffer */
 pub const IXGBE_DMATXCTL_GDV: u32 = 0x8; /* Global Double VLAN */
 pub const IXGBE_DMATXCTL_MDP_EN: u32 = 0x20; /* Bit 5 */
@@ -3033,7 +3039,7 @@ pub const IXGBE_RFCTL_IPV6_EX_DIS: u32 = 0x00010000;
 pub const IXGBE_RFCTL_NEW_IPV6_EXT_DIS: u32 = 0x00020000;
 
 /* Transmit Config masks */
-pub const IXGBE_TXDCTL_ENABLE: u32 = 0x02000000; /* Ena specific Tx Queue */
+pub const IXGBE_TXDCTL_ENABLE: u32 = 1 << 25; /* Ena specific Tx Queue */
 pub const IXGBE_TXDCTL_SWFLSH: u32 = 0x04000000; /* Tx Desc. wr-bk flushing */
 pub const IXGBE_TXDCTL_WTHRESH_SHIFT: u32 = 16; /* shift to WTHRESH bits */
 /* Enable short packet padding to 64 bytes */
@@ -3048,7 +3054,7 @@ pub const IXGBE_TDWBAL_SEQNUM_WB_ENABLE: u32 = 0x2; /* Tx seq# write-back enable
 /* Receive Config masks */
 pub const IXGBE_RXCTRL_RXEN: u32 = 0x000000010; /* Enable Receiver */
 pub const IXGBE_RXCTRL_DMBYPS: u32 = 0x00000002; /* Desc Monitor Bypass */
-pub const IXGBE_RXDCTL_ENABLE: u32 = 0x02000000; /* Ena specific Rx Queue */
+pub const IXGBE_RXDCTL_ENABLE: u32 = 1 << 25; /* Ena specific Rx Queue */
 pub const IXGBE_RXDCTL_SWFLSH: u32 = 0x04000000; /* Rx Desc wr-bk flushing */
 pub const IXGBE_RXDCTL_RLPMLMASK: u32 = 0x00003FFF; /* X540 supported only */
 pub const IXGBE_RXDCTL_RLPML_EN: u32 = 0x00008000;
@@ -3107,12 +3113,12 @@ pub const IXGBE_RXMTRL_V2_ANNOUNCE_MSG: u32 = 0x0B00;
 pub const IXGBE_RXMTRL_V2_SIGNALLING_MSG: u32 = 0x0C00;
 pub const IXGBE_RXMTRL_V2_MGMT_MSG: u32 = 0x0D00;
 
-pub const IXGBE_FCTRL_SBP: u32 = 0x00000002; /* Store Bad Packet */
-pub const IXGBE_FCTRL_MPE: u32 = 0x00000100; /* Multicast Promiscuous Ena*/
-pub const IXGBE_FCTRL_UPE: u32 = 0x00000200; /* Unicast Promiscuous Ena */
-pub const IXGBE_FCTRL_BAM: u32 = 0x00000400; /* Broadcast Accept Mode */
+pub const IXGBE_FCTRL_SBP: u32 = 1 << 2; /* Store Bad Packet */
+pub const IXGBE_FCTRL_MPE: u32 = 1 << 4; /* Multicast Promiscuous Ena*/
+pub const IXGBE_FCTRL_UPE: u32 = 1 << 3; /* Unicast Promiscuous Ena */
+pub const IXGBE_FCTRL_BAM: u32 = 1 << 15; /* Broadcast Accept Mode */
 pub const IXGBE_FCTRL_PMCF: u32 = 0x00001000; /* Pass MAC Control Frames */
-pub const IXGBE_FCTRL_DPF: u32 = 0x00002000; /* Discard Pause Frame */
+pub const IXGBE_FCTRL_DPF: u32 = 1 << 22; /* Discard Pause Frame */
 /* Receive Priority Flow Control Enable */
 pub const IXGBE_FCTRL_RPFCE: u32 = 0x00004000;
 pub const IXGBE_FCTRL_RFCE: u32 = 0x00008000; /* Receive Flow Control Ena */
