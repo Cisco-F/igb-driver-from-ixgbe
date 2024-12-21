@@ -535,8 +535,8 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
 
         self.disable_interrupts();
 
-        self.set_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
-        self.wait_clear_reg32(IXGBE_CTRL, IXGBE_CTRL_RST_MASK);
+        self.set_reg32(IXGBE_CTRL, IXGBE_CTRL_RST);
+        self.wait_clear_reg32(IXGBE_CTRL, IXGBE_CTRL_RST);
         // TODO: sleep 10 millis.
         let _ = H::wait_until(Duration::from_millis(1000));
 

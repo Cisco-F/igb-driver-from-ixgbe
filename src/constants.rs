@@ -1887,7 +1887,7 @@ pub const IXGBE_PSRTYPE_RQPL_SHIFT: u32 = 29;
 /* CTRL Bit Masks */
 pub const IXGBE_CTRL_GIO_DIS: u32 = 0x00000004; /* Global IO Master Disable bit */
 pub const IXGBE_CTRL_LNK_RST: u32 = 0x00000008; /* Link Reset. Resets everything. */
-pub const IXGBE_CTRL_RST: u32 = 0x04000000; /* Reset (SW) */
+pub const IXGBE_CTRL_RST: u32 = 1 << 26; /* Reset (SW) */
 pub const IXGBE_CTRL_RST_MASK: u32 = IXGBE_CTRL_LNK_RST | IXGBE_CTRL_RST;
 
 /* FACTPS */
