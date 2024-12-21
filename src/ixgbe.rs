@@ -589,7 +589,9 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
     #[allow(clippy::needless_range_loop)]
     fn init_rx(&mut self, pool: &Arc<MemPool>) -> IxgbeResult {
         // disable rx while re-configuring it
-        self.clear_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        // self.clear_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.wait_clear_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.set_reg32(IXGBE_RXDCTL(0), 0);
 
         // section 4.6.11.3.4 - allocate all queues and traffic to PB0
         // self.set_reg32(IXGBE_RXPBSIZE(0), IXGBE_RXPBSIZE_128KB);
@@ -604,17 +606,20 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         // // accept broadcast packets
         // self.set_flags32(IXGBE_FCTRL, IXGBE_FCTRL_BAM);
 
+        self.set_flags32(IXGBE_CTRL_EXT, 0x00010000);
+
         // configure queues, same for all queues
         for i in 0..self.num_rx_queues {
             info!("initializing rx queue {}", i);
             // enable advanced rx descriptors
-            self.set_reg32(
-                IXGBE_SRRCTL(u32::from(i)),
-                (self.get_reg32(IXGBE_SRRCTL(u32::from(i))) & !IXGBE_SRRCTL_DESCTYPE_MASK)
-                    | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF,
-            );
+            // self.set_reg32(
+            //     IXGBE_SRRCTL(u32::from(i)),
+            //     (self.get_reg32(IXGBE_SRRCTL(u32::from(i))) & !IXGBE_SRRCTL_DESCTYPE_MASK)
+            //         | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF,
+            // );
             // let nic drop packets if no rx descriptor is available instead of buffering them
-            self.set_flags32(IXGBE_SRRCTL(u32::from(i)), IXGBE_SRRCTL_DROP_EN);
+            self.wait_clear_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+            self.set_reg32(IXGBE_RXDCTL(0), 0);
 
             assert_eq!(mem::size_of::<AdvancedTxDescriptor>(), 16);
             // section 7.1.9 - setup descriptor ring
@@ -666,7 +671,10 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         }
 
         // start rx
-        self.set_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.set_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.wait_set_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        debug!("rx queue enable!");
+        // self.set_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
 
         Ok(())
     }
