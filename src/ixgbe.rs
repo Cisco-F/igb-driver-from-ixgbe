@@ -824,7 +824,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         loop{
             let status = self.get_reg32(IGB_STATUS);
             //info!("status {:b}", status);
-            if status & 0b10 == 0x10 {
+            if status & (1 << 1) == (1 << 1) {
                 break;
             }
         }
