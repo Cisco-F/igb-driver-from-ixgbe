@@ -606,6 +606,9 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         // // accept broadcast packets
         // self.set_flags32(IXGBE_FCTRL, IXGBE_FCTRL_BAM);
 
+        self.set_flags32(IXGBE_RXCTRL, IGB_RCTL_BAM);
+        // accept broadcast packets
+        self.set_flags32(IXGBE_RXCTRL, IGB_RCTL_LPE);
         self.set_flags32(IXGBE_CTRL_EXT, 0x00010000);
 
         // configure queues, same for all queues
@@ -671,7 +674,7 @@ impl<H: IxgbeHal, const QS: usize> IxgbeDevice<H, QS> {
         }
 
         // start rx
-        self.set_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
+        self.set_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
         self.wait_set_reg32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
         debug!("rx queue enable!");
         // self.set_flags32(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
